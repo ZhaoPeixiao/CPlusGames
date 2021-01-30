@@ -26,7 +26,7 @@ namespace synth
 		FTYPE on;		// Time note was activated
 		FTYPE off;		// Time note was deactivated
 		bool active;
-		instrument_base *channel;
+		instrument_base* channel;
 
 		note()
 		{
@@ -52,7 +52,6 @@ namespace synth
 	FTYPE osc(const FTYPE dTime, const FTYPE dHertz, const int nType = OSC_SINE,
 		const FTYPE dLFOHertz = 0.0, const FTYPE dLFOAmplitude = 0.0, FTYPE dCustom = 50.0)
 	{
-
 		FTYPE dFreq = w(dHertz) * dTime + dLFOAmplitude * dHertz * (sin(w(dLFOHertz) * dTime));
 
 		switch (nType)
@@ -374,7 +373,7 @@ namespace synth
 			fAccumulate = 0;
 		}
 
-		int update(FTYPE fElapsedTime)
+		int Update(FTYPE fElapsedTime)
 		{
 			vecNotes.clear();
 
@@ -413,22 +412,20 @@ namespace synth
 			vecChannel.push_back(c);
 		}
 
-
-		public:
-			int nBeats;
-			int nSubBeats;
-			FTYPE fTempo;
-			FTYPE fBeatTime;
-			FTYPE fAccumulate;
-			int nCurrentBeat;
-			int nTotalBeats;
+	public:
+		int nBeats;
+		int nSubBeats;
+		FTYPE fTempo;
+		FTYPE fBeatTime;
+		FTYPE fAccumulate;
+		int nCurrentBeat;
+		int nTotalBeats;
 
 	public:
 		vector<channel> vecChannel;
 		vector<note> vecNotes;
 
 	private:
-
 	};
 }
 
@@ -493,7 +490,6 @@ FTYPE MakeNoise(int nChannle, FTYPE dTime)
 
 int main()
 {
-
 	wcout << "Multiple FM Oscillators, Sequencing, Polyphony" << endl << endl;
 
 	// Get all sound hardware
@@ -546,10 +542,107 @@ int main()
 	{
 		// --- SOUND STUFF ---
 
-		// Update Timings 
+		// Update Timings
 		clock_real_time = chrono::high_resolution_clock::now();
 		auto time_last_loop = clock_real_time - clock_old_time;
+		clock_old_time = clock_real_time;
+		dElapsedTime = chrono::duration<FTYPE>(time_last_loop).count();
+		dWallTime += dElapsedTime;
+		FTYPE dTimeNow = sound.GetTime();
 
+		// Sequencer (generates notes, note offs applied by note lifespan) ======================================
+		int newNotes = seq.Update(dElapsedTime);
+		muxNotes.lock();
+		for (int a = 0; a < newNotes; a++)
+		{
+			seq.vecNotes[a].on = dTimeNow;
+			vecNotes.emplace_back(seq.vecNotes[a]);
+		}
+		muxNotes.unlock();
+		// Keyboard (generates and removes notes depending on key state) ========================================
+		for (int k = 0; k < 16; k++)
+		{
+			short nKeyState = GetAsyncKeyState((unsigned char)("ZSXCFVGBNJMK\xbcL\xbe\xbf"[k]));
+
+			// Check if note already exists in currently playing notes
+			muxNotes.lock();
+			auto noteFound = find_if(vecNotes.begin(), vecNotes.end(), [&k](synth::note const& item) {return item.id == k + 64 && item.channel == &instHarm; });
+			if (noteFound == vecNotes.end())
+			{
+				// Note not found in vector
+				if (nKeyState & 0x8000)
+				{
+					// Key has been pressed so create a new note
+					synth::note n;
+					n.id = k + 64;
+					n.on = dTimeNow;
+					n.active = true;
+					n.channel = &instHarm;
+					// Add note to vector
+					vecNotes.emplace_back(n);
+				}
+				else
+				{
+					// Note exists in vector
+					if (nKeyState & 0x8000)
+					{
+						// Key is still held, so do nothing
+						if (noteFound->off > noteFound->off)
+						{
+							// Key has been pressed again during release phase
+							noteFound->on = dTimeNow;
+							noteFound->active = true;
+						}
+					}
+					else
+					{
+						// Key has been released, so switch off
+						if (noteFound->off < noteFound->on)
+						{
+							noteFound->off = dTimeNow;
+						}
+					}
+				}
+			}
+			muxNotes.unlock();
+		}
+
+		// --- VISUAL STUFF ---
+		// Clear Background
+		for (int i = 0; i < 80 * 30; i++)
+		{
+			screen[i] = L' ';
+		}
+		// Draw Sequencer
+		draw(2, 2, L"SEQUENCER:");
+		for (int beats = 0; beats < seq.nBeats; beats++)
+		{
+			draw(beats * seq.nSubBeats + 20, 2, L"O");
+			for (int subbeats = 1; subbeats < seq.nSubBeats; subbeats++)
+				draw(beats * seq.nSubBeats + subbeats + 20, 2, L".");
+		}
+		// Draw Sequences
+		int n = 0;
+		for (auto v : seq.vecChannel)
+		{
+			draw(2, 3 + n, v.instrument->name);
+			draw(20, 3 + n, v.sBeat);
+			n++;
+		}
+		// Draw Beat Cursor
+		draw(20 + seq.nCurrentBeat, 1, L"|");
+		// Draw Keyboard
+		draw(2, 8, L"|   |   |   |   |   | |   |   |   |   | |   | |   |   |   |  ");
+		draw(2, 9, L"|   | S |   |   | F | | G |   |   | J | | K | | L |   |   |  ");
+		draw(2, 10, L"|   |___|   |   |___| |___|   |   |___| |___| |___|   |   |__");
+		draw(2, 11, L"|     |     |     |     |     |     |     |     |     |     |");
+		draw(2, 12, L"|  Z  |  X  |  C  |  V  |  B  |  N  |  M  |  ,  |  .  |  /  |");
+		draw(2, 13, L"|_____|_____|_____|_____|_____|_____|_____|_____|_____|_____|");
+		// Draw Stats
+		wstring stats = L"Notes: " + to_wstring(vecNotes.size()) + L" Wall Time: " + to_wstring(dWallTime) + L" CPU Time: " + to_wstring(dTimeNow) + L" Latency: " + to_wstring(dWallTime - dTimeNow);
+		draw(2, 15, stats);
+		// Update Display
+		WriteConsoleOutputCharacter(hConsole, screen, 80 * 30, { 0,0 }, &dwBytesWritten);
 	}
 
 	return 0;
