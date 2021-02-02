@@ -1,0 +1,2 @@
+D:\workshop\CPlusGames\ConFPS\Debug\ConFPS.exe
+D:\workshop\CPlusGames\ConFPS\Debug\ConFPS.pdb
