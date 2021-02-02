@@ -1,0 +1,2 @@
+D:\workshop\CPlusGames\VideoTetris\Debug\VideoTetris.exe
+D:\workshop\CPlusGames\VideoTetris\Debug\VideoTetris.pdb
