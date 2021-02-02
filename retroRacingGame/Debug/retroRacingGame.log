@@ -1,0 +1,11 @@
+﻿  RetroRacer.cpp
+D:\workshop\CPlusGames\retroRacingGame\RetroRacer.cpp(120,24): warning C4018: “<”: 有符号/无符号不匹配
+D:\workshop\CPlusGames\retroRacingGame\RetroRacer.cpp(165,20): warning C4244: “初始化”: 从“float”转换到“int”，可能丢失数据
+D:\workshop\CPlusGames\retroRacingGame\RetroRacer.cpp(166,18): warning C4244: “初始化”: 从“float”转换到“int”，可能丢失数据
+D:\workshop\CPlusGames\retroRacingGame\RetroRacer.cpp(167,21): warning C4244: “初始化”: 从“float”转换到“int”，可能丢失数据
+D:\workshop\CPlusGames\retroRacingGame\RetroRacer.cpp(168,19): warning C4244: “初始化”: 从“float”转换到“int”，可能丢失数据
+D:\workshop\CPlusGames\retroRacingGame\RetroRacer.cpp(202,15): warning C4244: “初始化”: 从“double”转换到“int”，可能丢失数据
+D:\workshop\CPlusGames\retroRacingGame\RetroRacer.cpp(247,17): warning C4244: “初始化”: 从“float”转换到“int”，可能丢失数据
+D:\workshop\CPlusGames\retroRacingGame\RetroRacer.cpp(248,17): warning C4244: “初始化”: 从“float”转换到“int”，可能丢失数据
+D:\workshop\CPlusGames\retroRacingGame\RetroRacer.cpp(249,22): warning C4244: “初始化”: 从“float”转换到“int”，可能丢失数据
+  retroRacingGame.vcxproj -> D:\workshop\CPlusGames\retroRacingGame\Debug\retroRacingGame.exe
